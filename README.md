@@ -1,4 +1,4 @@
-# os-xproxy
+# xproxy
 
 Category: `security/xproxy`
 
@@ -34,7 +34,7 @@ When enabled, all LAN traffic is routed through a VLESS, VMess, Shadowsocks, or 
 SSH into your OPNsense firewall and run:
 
 ```bash
-fetch -o - https://raw.githubusercontent.com/dasunNimantha/os-xproxy/main/install.sh | sh
+fetch -o - https://raw.githubusercontent.com/dasunNimantha/xproxy/main/install.sh | sh
 ```
 
 Then navigate to **VPN > Xproxy** in the web UI to configure.
@@ -44,9 +44,9 @@ Then navigate to **VPN > Xproxy** in the web UI to configure.
 ```bash
 # Clone and copy files
 cd /tmp
-fetch -o os-xproxy.tar.gz https://github.com/dasunNimantha/os-xproxy/archive/refs/heads/main.tar.gz
-tar xzf os-xproxy.tar.gz
-cd os-xproxy-main/src
+fetch -o xproxy.tar.gz https://github.com/dasunNimantha/xproxy/archive/refs/heads/main.tar.gz
+tar xzf xproxy.tar.gz
+cd xproxy-main/src
 find . -type f | while read FILE; do
   mkdir -p "$(dirname /usr/local/$FILE)"
   cp "$FILE" "/usr/local/$FILE"
@@ -57,7 +57,7 @@ service configd restart
 ### Uninstall
 
 ```bash
-fetch -o - https://raw.githubusercontent.com/dasunNimantha/os-xproxy/main/uninstall.sh | sh
+fetch -o - https://raw.githubusercontent.com/dasunNimantha/xproxy/main/uninstall.sh | sh
 ```
 
 ## UI
