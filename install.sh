@@ -23,9 +23,7 @@ find . -type f | while read FILE; do
     cp "${FILE}" "${PREFIX}/${FILE}"
 done
 
-chmod +x "${PREFIX}/opnsense/scripts/xproxy/"*.py \
-         "${PREFIX}/opnsense/scripts/xproxy/"*.sh \
-         "${PREFIX}/opnsense/scripts/xproxy/"*.php 2>/dev/null || true
+chmod +x "${PREFIX}/opnsense/scripts/xproxy/"*.py "${PREFIX}/opnsense/scripts/xproxy/"*.sh "${PREFIX}/opnsense/scripts/xproxy/"*.php 2>/dev/null || true
 
 cd /tmp
 rm -rf os-xproxy-${BRANCH} os-xproxy.tar.gz
