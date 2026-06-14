@@ -29,19 +29,68 @@
 namespace OPNsense\Coretun\Api;
 
 use OPNsense\Base\ApiMutableModelControllerBase;
+use OPNsense\Core\Backend;
 
 class ServersController extends ApiMutableModelControllerBase
 {
     protected static $internalModelName = 'coretun';
     protected static $internalModelClass = 'OPNsense\Coretun\Coretun';
 
+    private const PROBE_STATE = '/usr/local/etc/coretun/probe_state.json';
+
+    /**
+     * Read the per-server probe state written by probe_servers.py.
+     * @return array<string, array<string, mixed>>
+     */
+    private function loadProbeState(): array
+    {
+        if (!is_file(self::PROBE_STATE)) {
+            return [];
+        }
+        $data = json_decode((string)@file_get_contents(self::PROBE_STATE), true);
+        return is_array($data) ? $data : [];
+    }
+
     public function searchItemAction()
     {
-        return $this->searchBase(
+        $result = $this->searchBase(
             "servers.server",
             array('description', 'protocol', 'address', 'port', 'security'),
             "description"
         );
+        if (isset($result['rows']) && is_array($result['rows'])) {
+            $state = $this->loadProbeState();
+            foreach ($result['rows'] as &$row) {
+                $st = $state[$row['uuid'] ?? ''] ?? null;
+                if ($st === null) {
+                    $row['last_latency'] = '';
+                    $row['last_probe'] = '';
+                } elseif (!empty($st['ok']) && isset($st['latency_ms'])) {
+                    $row['last_latency'] = (string)(int)$st['latency_ms'];
+                    $row['last_probe'] = !empty($st['ts']) ? date('Y-m-d H:i', (int)$st['ts']) : '';
+                } else {
+                    $row['last_latency'] = 'down';
+                    $row['last_probe'] = !empty($st['ts']) ? date('Y-m-d H:i', (int)$st['ts']) : '';
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Probe every enabled server (real traffic through a throwaway xray) and
+     * record latency. Triggered by the "Measure latency" button on the
+     * Servers tab. Returns {"results":[...], "best":"<uuid|null>"}.
+     */
+    public function probeAction()
+    {
+        $result = array("result" => "failed");
+        if (!$this->request->isPost()) {
+            return $result;
+        }
+        $response = trim((new Backend())->configdRun('coretun subscription_probe'));
+        $parsed = json_decode($response, true);
+        return is_array($parsed) ? $parsed : array("result" => "failed", "raw" => $response);
     }
 
     public function setItemAction($uuid)

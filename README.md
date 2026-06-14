@@ -9,6 +9,10 @@ When enabled, LAN traffic is routed through a VLESS, VMess, Shadowsocks, or Troj
 - Transparent proxying via TUN interface (hev-socks5-tunnel) — phones, IoT, smart TVs, and guest devices are covered automatically
 - VLESS (with XTLS-Vision / Reality), VMess, Shadowsocks, and Trojan protocols
 - Import server profiles from standard proxy URIs (`vless://`, `vmess://`, `ss://`, `trojan://`)
+- **Subscriptions** — add subscription links (plain or Base64 server lists), auto-update on a per-subscription schedule, with full sync (new servers added, removed ones deleted, manual servers untouched)
+- **Keyword exclusion** — skip unwanted servers from a subscription by name (e.g. `LTE, TORRENT`); matches are never imported and are removed on the next sync
+- **Connectivity watchdog with latency-based failover** — on outage, every server is probed through a throwaway xray instance and the lowest-latency working one is selected; if none work, the subscription is refreshed and retried
+- **On-demand latency measurement** — a "Measure latency" button on the Servers tab tests every server and stores/shows the last result per server
 - Per-interface routing — choose which LANs (e.g. Guest, IoT) route through the tunnel, or route all
 - Policy-based routing with dynamic firewall rules — rules are only active while the service is running
 - Context-aware server dialog — fields shown/hidden based on selected protocol, security, and transport
@@ -27,6 +31,26 @@ When enabled, LAN traffic is routed through a VLESS, VMess, Shadowsocks, or Troj
 3. The plugin registers a virtual interface (`coretun`) and gateway (`CORETUN_TUN`) in OPNsense
 4. Firewall rules route selected LAN interface traffic through the TUN gateway using OPNsense's `_firewall()` plugin hook
 5. When "Route LAN through tunnel" is disabled, only local SOCKS5/HTTP proxy is available — TUN and firewall rules are skipped
+
+## Subscriptions & auto-update
+
+Add one or more subscription links on the **Subscriptions** tab. A subscription returns a list of proxy URIs (plain text or Base64-encoded); the plugin fetches it on the router (via `fetch`/`curl`, using the system CA bundle) and synchronises the servers into the model:
+
+- **Full sync** — servers present in the subscription are added, servers that disappeared are removed, and servers you added manually (not tied to a subscription) are left untouched.
+- **Per-subscription schedule** — each subscription has its own update interval in hours (default 4). An hourly cron tick refreshes only the subscriptions whose interval has elapsed.
+- **Base64 mode** — `Auto-detect` (default), `Always Base64`, or `Plain text`.
+- **Exclude keywords** — a comma-separated list (e.g. `LTE, TORRENT`); any server whose name contains one of them (case-insensitive) is skipped on add and removed on the next sync. Useful to keep mobile/throttled exit nodes off the router.
+- **Manual control** — `Update now` (per row) and `Update all now` re-fetch immediately.
+
+## Connectivity watchdog & failover
+
+A watchdog runs every few minutes and probes the local SOCKS proxy. On a sustained outage it recovers automatically:
+
+1. **Latency probe** — every other enabled server is tested by spinning up a throwaway xray instance and sending a real request through it (this verifies the full proxy chain — reality/TLS handshake, auth, egress — not just TCP reachability of the endpoint). Probes run in parallel.
+2. **Failover** — the active server is switched to the lowest-latency server that actually passes traffic, then the tunnel is hot-reloaded.
+3. **Subscription refresh** — if no server works, the relevant subscription(s) are refreshed to pull a fresh server list, and the watchdog retries on the next tick (rate-limited to avoid hammering providers).
+
+The same probe powers the **Measure latency** button on the Servers tab, and the last measured latency is stored per server and shown in the grid.
 
 ## Dependencies
 
@@ -73,10 +97,11 @@ fetch -o - https://raw.githubusercontent.com/dasunNimantha/coretun/main/uninstal
 
 ## UI
 
-The plugin adds **VPN > Coretun** to the OPNsense sidebar with four tabs:
+The plugin adds **VPN > Coretun** to the OPNsense sidebar with five tabs:
 
 - **General** — Enable/disable the service, select active server, toggle transparent routing, choose which interfaces to tunnel, optional Prometheus exporter
-- **Servers** — View and manage server profiles (shows protocol, address, port, security at a glance)
+- **Servers** — View and manage server profiles (shows protocol, address, port, security at a glance). Includes a per-server **Latency** column and a **Measure latency** button that probes every server and stores the last result
+- **Subscriptions** — Add subscription URLs and manage them: per-subscription auto-update interval, Base64 decoding mode, keyword exclusion, plus **Update now** / **Update all now** buttons
 - **Import** — Paste proxy URIs to batch-import server configurations (with parse error reporting)
 - **Log** — Live service log viewer with smart auto-scroll (won't jump to bottom while you're reading)
 

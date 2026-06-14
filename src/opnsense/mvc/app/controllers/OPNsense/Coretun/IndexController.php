@@ -34,7 +34,20 @@ class IndexController extends \OPNsense\Base\IndexController
     {
         $this->view->formGeneral = $this->getForm("general");
         $this->view->formDialogServer = $this->getForm("dialogServer");
-        $this->view->formGridServer = $this->getFormGrid("dialogServer");
+        // Append a runtime-only "Latency" column (populated from probe_state.json
+        // by ServersController, rendered by the custom 'latency' formatter).
+        $gridServer = $this->getFormGrid("dialogServer");
+        $gridServer['fields'][] = [
+            'column-id' => 'last_latency',
+            'label' => gettext('Latency'),
+            'type' => 'string',
+            'sortable' => 'false',
+            'formatter' => 'latency',
+            'width' => '8em',
+        ];
+        $this->view->formGridServer = $gridServer;
+        $this->view->formDialogSubscription = $this->getForm("dialogSubscription");
+        $this->view->formGridSubscription = $this->getFormGrid("dialogSubscription");
         $this->view->pick('OPNsense/Coretun/index');
     }
 }

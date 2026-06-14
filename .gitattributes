@@ -1,0 +1,13 @@
+# Enforce LF line endings for all text files, on commit and on checkout,
+# regardless of the contributor's OS or local git config.
+* text=auto eol=lf
+
+# Known binary types — never touch their bytes.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.gz binary
+*.zip binary
+*.tar binary

@@ -85,7 +85,7 @@
                 </enabled>
                 <description type="TextField">
                     <Required>N</Required>
-                    <Mask>/^([\t\n\v\f\r 0-9a-zA-Z.\-,_\x{00A0}-\x{FFFF}]){0,255}$/u</Mask>
+                    <Mask>/^[\t\n\r\x{20}-\x{10FFFF}]{0,255}$/u</Mask>
                     <ValidationMessage>Description should be a string between 0 and 255 characters.</ValidationMessage>
                 </description>
                 <protocol type="OptionField">
@@ -168,7 +168,55 @@
                 <raw_uri type="TextField">
                     <Required>N</Required>
                 </raw_uri>
+                <source_subscription type="TextField">
+                    <Required>N</Required>
+                    <Mask>/^[a-f0-9-]{0,40}$/i</Mask>
+                    <ValidationMessage>Internal subscription reference.</ValidationMessage>
+                </source_subscription>
             </server>
         </servers>
+        <subscriptions>
+            <subscription type="ArrayField">
+                <enabled type="BooleanField">
+                    <Default>1</Default>
+                    <Required>Y</Required>
+                </enabled>
+                <name type="TextField">
+                    <Required>Y</Required>
+                    <Mask>/^[\t\n\r\x{20}-\x{10FFFF}]{1,255}$/u</Mask>
+                    <ValidationMessage>Name should be a string between 1 and 255 characters.</ValidationMessage>
+                </name>
+                <url type="TextField">
+                    <Required>Y</Required>
+                    <Mask>/^https?:\/\/\S+$/i</Mask>
+                    <ValidationMessage>Enter a valid http(s) subscription URL.</ValidationMessage>
+                </url>
+                <auto_update type="BooleanField">
+                    <Default>1</Default>
+                    <Required>Y</Required>
+                </auto_update>
+                <update_interval type="IntegerField">
+                    <Default>4</Default>
+                    <Required>Y</Required>
+                    <MinimumValue>1</MinimumValue>
+                    <MaximumValue>168</MaximumValue>
+                    <ValidationMessage>Update interval must be between 1 and 168 hours.</ValidationMessage>
+                </update_interval>
+                <base64_mode type="OptionField">
+                    <Default>auto</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <auto>Auto-detect</auto>
+                        <yes>Always Base64</yes>
+                        <no>Plain text</no>
+                    </OptionValues>
+                </base64_mode>
+                <exclude_keywords type="TextField">
+                    <Required>N</Required>
+                    <Mask>/^[\t\x{20}-\x{10FFFF}]{0,1024}$/u</Mask>
+                    <ValidationMessage>Comma-separated list of words; servers whose name contains any of them are skipped.</ValidationMessage>
+                </exclude_keywords>
+            </subscription>
+        </subscriptions>
     </items>
 </model>

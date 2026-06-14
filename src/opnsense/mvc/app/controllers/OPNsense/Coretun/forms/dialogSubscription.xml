@@ -1,0 +1,44 @@
+<form>
+    <field>
+        <id>subscription.enabled</id>
+        <label>Enabled</label>
+        <type>checkbox</type>
+        <help>Enable or disable this subscription.</help>
+    </field>
+    <field>
+        <id>subscription.name</id>
+        <label>Name</label>
+        <type>text</type>
+        <help>Friendly name for this subscription (e.g. provider name).</help>
+    </field>
+    <field>
+        <id>subscription.url</id>
+        <label>Subscription URL</label>
+        <type>text</type>
+        <help>The http(s) link that returns the proxy list (vless://… etc., optionally Base64-encoded).</help>
+    </field>
+    <field>
+        <id>subscription.auto_update</id>
+        <label>Auto update</label>
+        <type>checkbox</type>
+        <help>Periodically re-fetch this subscription and sync its servers on the schedule below.</help>
+    </field>
+    <field>
+        <id>subscription.update_interval</id>
+        <label>Update interval (hours)</label>
+        <type>text</type>
+        <help>How often to refresh when auto-update is enabled (1–168 hours). Default is 4.</help>
+    </field>
+    <field>
+        <id>subscription.base64_mode</id>
+        <label>Body decoding</label>
+        <type>dropdown</type>
+        <help>How the subscription body is decoded. "Auto-detect" handles both plain and Base64-encoded lists (recommended).</help>
+    </field>
+    <field>
+        <id>subscription.exclude_keywords</id>
+        <label>Exclude keywords</label>
+        <type>text</type>
+        <help>Comma-separated words. Servers whose name contains any of these (case-insensitive) are skipped and removed on sync — e.g. "LTE, TORRENT". Leave empty to keep all.</help>
+    </field>
+</form>
