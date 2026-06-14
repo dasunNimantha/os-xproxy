@@ -222,6 +222,46 @@ function coretun_devices()
     return array(array('pattern' => '^' . preg_quote($dev, '/') . '$', 'volatile' => true));
 }
 
+function coretun_cron()
+{
+    $jobs = array();
+    $mdl = new \OPNsense\Coretun\Coretun();
+
+    /*
+     * Hourly tick for subscription auto-update. The script itself checks
+     * each subscription's interval (update_interval hours) against the
+     * last successful update, so only those actually due are fetched.
+     */
+    $hasAuto = false;
+    foreach ($mdl->subscriptions->subscription->iterateItems() as $sub) {
+        if ((string)$sub->enabled === '1' && (string)$sub->auto_update === '1') {
+            $hasAuto = true;
+            break;
+        }
+    }
+    if ($hasAuto) {
+        $jobs[]['autocron'] = array(
+            '/usr/local/sbin/configctl coretun subscription_update due',
+            '7', '*'
+        );
+    }
+
+    /*
+     * Connectivity watchdog: only meaningful while the tunnel service is
+     * enabled. Runs every 5 minutes; the script probes the proxy and, on
+     * sustained failure, fails over to another server and then refreshes
+     * the active server's subscription.
+     */
+    if ((string)$mdl->general->enabled === '1') {
+        $jobs[]['autocron'] = array(
+            '/usr/local/sbin/configctl coretun subscription_watchdog',
+            '*/5'
+        );
+    }
+
+    return $jobs;
+}
+
 function coretun_services()
 {
     $services = array();
